@@ -47,6 +47,12 @@ main{padding:28px 0 40px}.panel{background:white;border:1px solid var(--border);
 .timeline-nav a:hover{background:#314965}
 .timeline-nav a:focus-visible{outline:3px solid #007b71;outline-offset:3px}
 </style>
+<style>
+.fund-rate{max-width:520px;margin-top:16px}
+.fund-rate input{height:auto;padding:0;accent-color:#007b71}
+.fund-rate output{color:#08645b;font-weight:750}
+.fund-rate .rate-scale{display:flex;justify-content:space-between}
+</style>
 </head>
 <body>
 <header class="academic-header">
@@ -74,6 +80,11 @@ main{padding:28px 0 40px}.panel{background:white;border:1px solid var(--border);
 <label>Ingresos PPD<input id="ppd" type="number" min="0" step="any" value="25900000"><small class="control-note">UI por trimestre, IVA incluido</small></label>
 <label>Costo EPC<input id="build" type="number" min="-100" step="any" value="0"><small class="control-note">Variación % sobre la oferta</small></label>
 <label>Costo O&amp;M<input id="om" type="number" min="-100" step="any" value="0"><small class="control-note">Variación % sobre la oferta</small></label>
+</div>
+<div id="fundRateControl" class="fund-rate" hidden>
+<label for="fundRate">Tasa anual del Fondo en UI · <output id="fundRateValue" for="fundRate">5,94 %</output></label>
+<input id="fundRate" type="range" min="544" max="694" step="1" value="594" aria-describedby="fundRateScale">
+<div class="control-note rate-scale" id="fundRateScale"><span>5,44 %</span><span>Base 5,94 %</span><span>6,94 %</span></div>
 </div>
 <label class="scenario-picker">Escenarios de sensibilidad del Excel
 <select id="preset">
@@ -215,8 +226,12 @@ function XIRR(flows,dates,guess=0.1){
 }
 const IRR=(flows,guess)=>XIRR(flows,array(flows).map((_,i)=>i*365),guess);
 const months=Array.from({length:355},(_,i)=>i+6);
-function solve({epc=2,bank=1,ppd=25900000,build=0,om=0}={}){
+function solve({epc=2,bank=1,ppd=25900000,build=0,om=0,fundRate=594}={}){
   inputs={2:{[K(8,39)]:sheets[2][K(epc+6,48)],[K(19,39)]:sheets[2][K(bank+6,51)],[K(11,22)]:ppd,[K(16,43)]:build,[K(16,44)]:om,[K(16,45)]:0},9:{}};
+  if(bank===1){
+    if(!Number.isInteger(fundRate)||fundRate<544||fundRate>694)throw Error('La tasa del Fondo debe estar entre 5,44 % y 6,94 %.');
+    if(fundRate!==594)inputs[2][K(23,36)]=fundRate/10000; // Inputs!AJ23, tasa anual contractual.
+  }
   reset();
   const get=(s,r,c=5)=>G(s,K(r,c));
   const set=(r,c,v)=>{inputs[9][K(r,c)]=v};
@@ -281,7 +296,7 @@ self.onmessage = ({data:{s,role,i,token}}) => {
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const BASE={epc:2,bank:1,ppd:25900000,build:0,om:0};
+const BASE={epc:2,bank:1,ppd:25900000,build:0,om:0,fundRate:594};
 const shocks=[
   ['EPC +10 %',s=>({...s,build:(1+s.build)*1.10-1})],
   ['O&M +20 %',s=>({...s,om:(1+s.om)*1.20-1})],
@@ -410,9 +425,16 @@ worker.onerror=()=>status('El navegador no pudo iniciar el motor de cálculo.',t
 function read(){
   const fields=['ppd','build','om'].map($);
   if(fields.some(x=>x.value===''||!x.validity.valid))return null;
-  return {epc:+$('epc').value,bank:+$('bank').value,ppd:+$('ppd').value,build:+$('build').value/100,om:+$('om').value/100};
+  const bank=+$('bank').value;
+  return {epc:+$('epc').value,bank,ppd:+$('ppd').value,build:+$('build').value/100,om:+$('om').value/100,fundRate:bank===1?+$('fundRate').value:594};
 }
 function start(){
+  const enabled=$('bank').value==='1';
+  $('fundRateControl').hidden=!enabled;
+  $('fundRate').disabled=!enabled;
+  const rate=nf(+$('fundRate').value/100,2)+' %';
+  $('fundRateValue').textContent=rate;
+  $('fundRate').setAttribute('aria-valuetext',rate+' anual en UI');
   clearTimeout(timer);token++;
   scenario=read();
   current=null;sensitivity=[];render();renderSensitivity();
