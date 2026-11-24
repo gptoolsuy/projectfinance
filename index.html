@@ -40,6 +40,13 @@ main{padding:28px 0 40px}.panel{background:white;border:1px solid var(--border);
   .academic-credits{gap:14px;font-size:.8rem}
 }
 </style>
+<style>
+.timeline-nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 22px}
+.timeline-nav strong{margin-right:6px}
+.timeline-nav a{display:inline-block;background:#19243b;color:white;border-radius:8px;padding:10px 15px;font-weight:650;text-decoration:none}
+.timeline-nav a:hover{background:#314965}
+.timeline-nav a:focus-visible{outline:3px solid #007b71;outline-offset:3px}
+</style>
 </head>
 <body>
 <header class="academic-header">
@@ -58,6 +65,7 @@ main{padding:28px 0 40px}.panel{background:white;border:1px solid var(--border);
 </header>
 <div class="rail-banner" role="img" aria-label="Vías ferroviarias al amanecer"></div>
 <main class="wrap">
+<nav class="timeline-nav" aria-label="Líneas de tiempo"><strong>Líneas de tiempo</strong><a href="Linea_de_tiempo_del_proyecto_narrada.html">Vida del proyecto</a><a href="Periodo_de_gracia_narrado.html">Período de gracia</a></nav>
 <section class="panel" aria-labelledby="assumptions"><div class="panel-head"><div><h2 id="assumptions">Supuestos del escenario</h2><p class="sub">Base del Excel · Rieles S.A., Fondo de Infraestructura PPP y PPD trimestral de 25.900.000 UI, sin variaciones de costos. El caso base incorpora tres meses de gracia adicional, con primera amortización en el mes 33.</p></div><button class="reset" id="reset" type="button">Restablecer base</button></div>
 <form id="form">
 <div class="fields">

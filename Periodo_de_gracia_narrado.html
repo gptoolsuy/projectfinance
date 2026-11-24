@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es-UY"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Período de gracia · Infraestructura Ferroviaria</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#19243b;color:#f6f8fd;font:1rem system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:clamp(20px,5vw,64px)}h1{font-size:clamp(2rem,5vw,3.6rem);margin:8px 0 24px;line-height:1.05}.tag{color:#a9c6e1;font-weight:700}.steps{list-style:none;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:30px 0}.steps button{display:grid;align-content:start;gap:7px;width:100%;min-height:95px;border:0;border-top:4px solid #607792;color:#d3e2f3;background:transparent;text-align:left;padding:12px 7px}.steps button[aria-current=true]{border-color:#72debd;color:white;background:#25344e}.steps span{font-size:.82rem}.detail{background:#25344e;border-radius:14px;padding:24px;min-height:155px}.detail h2{margin:0 0 10px;color:#72debd}.detail p{margin:0;line-height:1.55}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:21px 0 0}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid white;outline-offset:3px}.actions button{border:1px solid #7d97b1;border-radius:7px;background:#19243b;color:white;padding:9px 14px}.actions button:first-child{background:#72debd;color:#19243b;border-color:#72debd;font-weight:700}#status{color:#c1d5e9;font-size:.9rem;min-height:1.4em}@media(max-width:620px){.steps{grid-template-columns:1fr;gap:1px}.steps button{border-top:0;border-left:4px solid #607792;min-height:0;grid-template-columns:8rem 1fr;padding:8px}}
+/* The color and the arrow identify each cash movement together. */
+.steps{grid-template-columns:repeat(6,minmax(0,1fr))}
+.steps button[data-flow="income"]{border-color:#72debd}
+.steps button[data-flow="payment"]{border-color:#ffc27c}
+.steps button[data-flow="income"] span{color:#a1f0d5}
+.steps button[data-flow="payment"] span{color:#ffd5a5}
+.comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.comparison article{background:#25344e;border-left:4px solid #ffaaa0;border-radius:8px;padding:14px 18px}
+.comparison article+article{border-color:#72debd}
+.comparison h3{font-size:1rem;margin:0 0 8px;color:#ffb6ae}
+.comparison article+article h3{color:#a1f0d5}
+.comparison p{margin:0;line-height:1.45}
+@media(max-width:820px) and (min-width:621px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.steps,.comparison{grid-template-columns:1fr}}
+.return-link{display:inline-block;margin-bottom:16px;color:#a1f0d5;font-weight:650}</style>
+<main>
+<a class="return-link" href="index.html">← Volver al simulador</a>
+<div class="tag">Project Finance · Infraestructura Ferroviaria</div>
+<h1>Período de gracia adicional de tres meses</h1>
+<div class="actions"><button id="play">Reproducir con audio</button><button id="stop">Detener</button></div>
+<p id="status" role="status"></p>
+<ol class="steps" id="steps" aria-label="Hitos del escenario con gracia"></ol>
+<section class="detail" aria-live="polite"><h2 id="heading"></h2><p id="detail"></p></section>
+<section class="comparison" aria-label="Cobertura al momento de la primera amortización">
+<article><h3>30/03/2030 · Pago en el mes 30</h3><p><strong>↑ Un PPD cobrado</strong> antes del pago. Ese flujo era insuficiente para alcanzar el RCSD requerido si la amortización comenzaba ese día.</p></article>
+<article><h3>30/06/2030 · Pago en el mes 33</h3><p><strong>↑↑ Dos PPD cobrados</strong> antes de la primera cuota de capital. Con los tres meses adicionales de gracia solicitados, el RCSD mínimo del caso base alcanza <strong>1,29 veces</strong>.</p></article>
+</section>
+</main>
+<script>
+const events=[
+ ['30/09/2029','Fin de obra','Rieles finaliza la obra y la infraestructura entra en servicio.','El treinta de septiembre de dos mil veintinueve termina la obra y la infraestructura entra en servicio.'],
+ ['31/12/2029','Primera factura','Se factura el PPD del primer trimestre de operación.','El treinta y uno de diciembre se factura el primer trimestre de operación. El pago por disponibilidad se cobra cuarenta y cinco días después de facturado.'],
+ ['≈14/02/2030','Primer cobro','Se cobra el PPD correspondiente al último trimestre de 2029.','El primer cobro se estima para el catorce de febrero de dos mil treinta. Es el único pago por disponibilidad cobrado antes del treinta de marzo.'],
+ ['30/03/2030','Pago de intereses','Con la gracia adicional se pagan solo intereses. Si también venciera el capital, un solo PPD cobrado sería insuficiente para alcanzar el RCSD requerido.','El treinta de marzo, en el mes treinta, solo había ingresado un pago por disponibilidad. Si ese día se pagaban intereses y la primera amortización, el flujo era insuficiente para alcanzar el índice de cobertura del servicio de deuda requerido. Por eso se solicitaron tres meses adicionales de gracia para el capital.'],
+ ['≈15/05/2030','Segundo cobro','Se cobra el PPD del primer trimestre de 2030.','El segundo cobro se estima para el quince de mayo. Para entonces, el proyecto ya ha cobrado dos pagos por disponibilidad.'],
+ ['30/06/2030','Primer pago de capital','En el mes 33 se pagan los intereses del trimestre y la primera cuota de capital, después de dos cobros de PPD.','El treinta de junio, en el mes treinta y tres, vencen los intereses del trimestre y la primera cuota de capital. Los tres meses adicionales de gracia permiten contar con dos cobros antes de empezar a amortizar la deuda.']
+];
+const $=id=>document.getElementById(id);
+const synth=window.speechSynthesis;
+let sequence=0;
+const buttons=events.map(([date,title],i)=>{
+ const item=document.createElement('li'),button=document.createElement('button');
+ const dateLabel=document.createElement('strong'),titleLabel=document.createElement('span');
+ const flow=title.includes('cobro')?'income':title.startsWith('Pago')||title.includes('pago')?'payment':'';
+ if(flow)button.dataset.flow=flow;
+ dateLabel.textContent=date;
+ titleLabel.textContent=(flow==='income'?'↑ ':flow==='payment'?'↓ ':'')+title;
+ button.append(dateLabel,titleLabel);
+ button.addEventListener('click',()=>{stop();show(i)});
+ item.append(button);$('steps').append(item);return button;
+});
+function show(i){
+ buttons.forEach((b,j)=>b.setAttribute('aria-current',String(i===j)));
+ $('heading').textContent=events[i][1];
+ $('detail').textContent=events[i][2];
+}
+function stop(){
+ sequence++;synth?.cancel();$('status').textContent='';
+}
+function play(i,run,voice){
+ if(run!==sequence||i===events.length)return;
+ show(i);
+ const speech=new SpeechSynthesisUtterance(events[i][3]);
+ speech.lang=voice?.lang||'es-UY';
+ if(voice)speech.voice=voice;
+ speech.rate=.94;
+ speech.onend=()=>{if(run!==sequence)return;if(i===events.length-1)$('status').textContent='Narración finalizada.';else play(i+1,run,voice)};
+ speech.onerror=()=>{if(run===sequence)$('status').textContent='El navegador no pudo reproducir la voz. Podés recorrer los hitos con los botones de fecha.'};
+ synth.speak(speech);
+}
+$('play').addEventListener('click',()=>{
+ stop();
+ if(!synth){$('status').textContent='Este navegador no ofrece narración. Podés recorrer los hitos con los botones de fecha.';return}
+ const voices=synth.getVoices().filter(v=>/^es(?:-|_)/i.test(v.lang));
+ const voice=voices.find(v=>v.lang==='es-UY')||voices.find(v=>v.lang==='es-AR')||voices[0];
+ if(!voice){$('status').textContent='Se necesita una voz en español disponible en el navegador para reproducir la narración.';return}
+ $('status').textContent='Reproduciendo narración en español…';
+ play(0,sequence,voice);
+});
+$('stop').addEventListener('click',stop);
+window.addEventListener('pagehide',stop);
+show(0);
+</script>
+</html>
